@@ -1,0 +1,14 @@
+import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "../lib/supabase";
+export function Login({ admin = false }: { admin?: boolean }) {
+  const [mode,setMode]=useState<"signin"|"signup">("signin"); const [email,setEmail]=useState(""); const [password,setPassword]=useState(""); const [name,setName]=useState(""); const [busy,setBusy]=useState(false); const [message,setMessage]=useState("");
+  const navigate=useNavigate(); const location=useLocation();
+  async function submit(e:React.FormEvent){e.preventDefault();setBusy(true);setMessage("");
+    try {
+      if(mode==="signup" && !admin){const {error}=await supabase.auth.signUp({email,password,options:{data:{full_name:name}}});if(error)throw error;setMessage("Account created. Check your email if email confirmation is enabled, then sign in.");}
+      else {const {error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error;navigate(admin?"/admin":(location.state as {from?:string})?.from||"/account");}
+    } catch(err){setMessage(err instanceof Error?err.message:"Unable to complete sign in.");} finally{setBusy(false);}
+  }
+  return <section className="auth-wrap"><div className="auth-art"><span className="eyebrow">WELCOME TO KLEEVO</span><h2>{admin?"Owner access.":"A cleaner routine starts here."}</h2><p>{admin?"Sign in with your authorized owner account to manage products and customer orders.":"Create an account to manage your orders and enjoy a simpler shopping experience."}</p><div className="auth-art-mark">KLEEVO</div></div><form className="auth-card" onSubmit={submit}><span className="eyebrow">{admin?"ADMINISTRATOR":"CUSTOMER ACCOUNT"}</span><h1>{admin?"Admin sign in":mode==="signin"?"Welcome back":"Create your account"}</h1><p className="muted">{admin?"This page is for authorized store administrators only.":"Sign in or create an account to continue."}</p>{mode==="signup"&&!admin&&<label>Full name<input value={name} onChange={e=>setName(e.target.value)} required autoComplete="name"/></label>}<label>Email address<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="email"/></label><label>Password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} required minLength={6} autoComplete={mode==="signin"?"current-password":"new-password"}/></label>{message&&<div className="notice">{message}</div>}<button className="button-primary full" disabled={busy}>{busy?"Please wait…":admin?"Sign in securely":mode==="signin"?"Sign in":"Create account"}</button>{!admin&&<p className="switch-auth">{mode==="signin"?"New to KLEEVO?":"Already have an account?"} <button type="button" onClick={()=>{setMode(mode==="signin"?"signup":"signin");setMessage("");}}>{mode==="signin"?"Create account":"Sign in"}</button></p>}{admin&&<Link className="back-link" to="/">← Back to store</Link>}</form></section>;
+}

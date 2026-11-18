@@ -1,0 +1,4 @@
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+export function RequireUser({ children }: { children: React.ReactNode }) { const { user, loading } = useAuth(); if (loading) return <div className="page-state">Loading account…</div>; return user ? <>{children}</> : <Navigate to="/login" replace />; }
+export function RequireAdmin({ children }: { children: React.ReactNode }) { const { user, role, loading } = useAuth(); if (loading) return <div className="page-state">Checking access…</div>; if (!user) return <Navigate to="/admin/login" replace />; return role === "admin" ? <>{children}</> : <div className="page-state"><h2>Access restricted</h2><p>This account is not authorized for the admin dashboard.</p></div>; }
